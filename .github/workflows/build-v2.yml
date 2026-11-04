@@ -1,0 +1,87 @@
+name: Build OpenCode 2 Android
+on:
+  pull_request:
+    paths: ['scripts/**v2*', 'scripts/build-bun-android.sh', 'scripts/build-opencode2-android.sh', 'patches/**', 'config/**', 'tests/**', '.github/workflows/*v2.yml']
+  workflow_dispatch:
+    inputs:
+      runner:
+        type: choice
+        options: [ubuntu-24.04, self-hosted]
+        default: ubuntu-24.04
+        description: Dedicated v2 runner recommended (32GB RAM, 120GiB free disk)
+      opencode_commit:
+        type: string
+        default: ''
+        description: Optional full OpenCode SHA for a test build (release prohibited)
+permissions:
+  contents: read
+concurrency:
+  group: v2-build-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  static:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: scripts/check-static-v2.sh
+  build:
+    if: github.event_name == 'workflow_dispatch'
+    needs: static
+    # Never execute fork PR code on a persistent self-hosted runner.
+    runs-on: ${{ inputs.runner == 'self-hosted' && fromJSON('["self-hosted","linux","x64","opencode-v2"]') || fromJSON('["ubuntu-24.04"]') }}
+    timeout-minutes: 360
+    env:
+      WORK_DIR: ${{ github.workspace }}/build-v2
+      V2_RESOURCE_GATE: '1'
+      OPENCODE_SHA_INPUT: ${{ inputs.opencode_commit }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Resource inventory and test source override
+        run: |
+          mkdir -p "$WORK_DIR/logs"
+          free -h | tee "$WORK_DIR/logs/resources.txt"
+          df -h . | tee -a "$WORK_DIR/logs/resources.txt"
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          sha = os.environ['OPENCODE_SHA_INPUT']
+          if sha:
+              assert re.fullmatch('[0-9a-f]{40}', sha), 'Full commit SHA required'
+              p = Path('config/versions-v2.json')
+              c = json.loads(p.read_text())
+              c['opencode']['commit'] = sha
+              p.write_text(json.dumps(c, indent=2)+'\n')
+          PY
+      - name: Check provisioned toolchain
+        run: scripts/preflight-v2.sh
+      - id: key
+        run: echo "key=$(python3 scripts/v2.py key)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            build-v2/dist/bun-android
+            build-v2/libopentui.so
+            build-v2/libopentui.so.provenance.json
+          key: v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.key.outputs.key }}
+          # No restore-keys: incompatible binaries must never be reused.
+      - name: Locked source, Bun, OpenTUI, CLI, package verification
+        run: scripts/test-build-v2.sh
+      - name: Save logs even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v2-build-logs-${{ github.run_id }}
+          path: build-v2/logs/
+      - name: Upload verified packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: opencode2-android-${{ github.run_id }}
+          path: build-v2/packages/
+          if-no-files-found: error
+      - name: Runtime status
+        if: always()
+        run: echo 'Android runtime, TUI, PTY and device regression tests are **NOT TESTED** by this Linux workflow.' >> "$GITHUB_STEP_SUMMARY"

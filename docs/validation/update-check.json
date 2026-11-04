@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "updates": [
+    {
+      "component": "opencode-release",
+      "current": "1.18.4",
+      "candidate": "v1.19.5",
+      "url": "https://github.com/anomalyco/opencode/releases/tag/v1.19.5",
+      "action": "Review and port Android commits; never substitute upstream directly"
+    },
+    {
+      "component": "bun",
+      "current": "1.4.2",
+      "current_commit": "744846f844374847c902b5e7fd59b4342a51ef99",
+      "candidate": "bun-v1.4.4",
+      "candidate_commit": "38afee6c84fcf48c0edb2466aa4b27d287a59c30",
+      "action": "Requires dependency, patch, build and Android device validation"
+    },
+    {
+      "component": "opentui",
+      "current": "0.5.10",
+      "current_commit": "f6673a04ccb671b9207da358c57152bfd27c781f",
+      "candidate": "v0.8.2",
+      "candidate_commit": "b7d9797f72a00afd4149175aa25f94475075a350",
+      "action": "Requires dependency, patch, build and Android device validation"
+    }
+  ],
+  "errors": [],
+  "compatibility": {
+    "commit": "6b03c82fc8e18f6119ae8a698e461b1219242715",
+    "actual": {
+      "bun": "bun@1.4.2",
+      "@opentui/core": "0.5.10",
+      "@opentui/solid": "0.5.10"
+    },
+    "expected": {
+      "bun": "bun@1.4.2",
+      "@opentui/core": "0.5.10",
+      "@opentui/solid": "0.5.10"
+    },
+    "dependency_versions_match": true,
+    "patch_compatibility": "NOT TESTED",
+    "android_runtime": "NOT TESTED"
+  },
+  "production_config_modified": false,
+  "has_updates": true
+}

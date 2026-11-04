@@ -1,0 +1,68 @@
+name: Release OpenCode 2 Android pre-release
+on:
+  workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: Successful manual build-v2 run on the default branch
+        required: true
+        type: string
+      device_report_path:
+        description: Reviewed JSON evidence path committed on the default branch
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: v2-release
+  cancel-in-progress: false
+jobs:
+  release:
+    if: github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-24.04
+    environment: v2-release
+    permissions:
+      contents: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      BUILD_RUN_ID: ${{ inputs.build_run_id }}
+      REPORT_PATH: ${{ inputs.device_report_path }}
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Verify build origin and preserve reviewed device evidence
+        id: build
+        run: |
+          python3 - <<'PY'
+          import json, os, re, subprocess
+          from pathlib import Path
+          run_id = os.environ['BUILD_RUN_ID']
+          assert re.fullmatch('[0-9]+', run_id)
+          repo = os.environ['GITHUB_REPOSITORY']
+          run = json.loads(subprocess.check_output(['gh', 'api', f'repos/{repo}/actions/runs/{run_id}']))
+          assert run['conclusion'] == 'success' and run['event'] == 'workflow_dispatch'
+          assert run['head_branch'] == os.environ['DEFAULT_BRANCH']
+          assert run['path'] == '.github/workflows/build-v2.yml'
+          assert run['head_repository']['full_name'] == repo
+          path = Path(os.environ['REPORT_PATH']).resolve()
+          assert path.is_relative_to(Path.cwd()) and path.is_file()
+          Path('device-results.json').write_bytes(path.read_bytes())
+          with open(os.environ['GITHUB_ENV'], 'a') as f: f.write('BUILD_COMMIT='+run['head_sha']+'\n')
+          PY
+      - name: Verify exact build code and downloaded packages
+        run: |
+          git checkout --detach "$BUILD_COMMIT"
+          gh run download "$BUILD_RUN_ID" --repo "$GITHUB_REPOSITORY" --name "opencode2-android-$BUILD_RUN_ID" --dir build-v2/packages
+          scripts/verify-packages-v2.sh
+      - name: Device regression and release notes gate
+        id: notes
+        run: python3 scripts/release-v2.py
+      - name: Publish approved pre-release
+        env:
+          TAG: ${{ steps.notes.outputs.tag }}
+        run: |
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$BUILD_COMMIT" --prerelease --title "$TAG" --notes-file release-notes-v2.md build-v2/packages/*.deb build-v2/packages/*.pkg.tar.xz build-v2/packages/*.zip build-v2/packages/SHA256SUMS build-v2/packages/build-record.json device-results.json

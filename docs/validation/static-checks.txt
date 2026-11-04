@@ -1,0 +1,53 @@
+Configuration valid; Android runtime: NOT TESTED
+test_bad_commit (test_v2.ConfigTests.test_bad_commit) ... ok
+test_bad_versions (test_v2.ConfigTests.test_bad_versions) ... ok
+test_cache_changes_with_lock (test_v2.ConfigTests.test_cache_changes_with_lock) ... ok
+test_locked_config (test_v2.ConfigTests.test_locked_config) ... ok
+test_reject_glibc (test_v2.ConfigTests.test_reject_glibc) ... ok
+test_reject_host_elf (test_v2.ConfigTests.test_reject_host_elf) ... ok
+test_packages_reproducible_and_corruption_rejected (test_v2.PackagingTests.test_packages_reproducible_and_corruption_rejected) ... ok
+test_prerelease_pacman_version (test_v2.PackagingTests.test_prerelease_pacman_version) ... ok
+test_apply_already_applied_and_conflict (test_v2.PatchTests.test_apply_already_applied_and_conflict) ... ok
+test_dirty_tree_rejected (test_v2.PatchTests.test_dirty_tree_rejected) ... diff --git a/file b/file
+index 4b48dee..6e5aa7c 100644
+--- a/file
++++ b/file
+@@ -1 +1 @@
+-original
++dirty
+ok
+test_patch_new_file_checked_with_temporary_index (test_v2.PatchTests.test_patch_new_file_checked_with_temporary_index) ... diff --git a/newfile b/newfile
+index ce01362..8e933d0 100644
+--- a/newfile
++++ b/newfile
+@@ -1 +1 @@
+-hello
++wrong
+ok
+test_complete_evidence (test_v2.ReleaseTests.test_complete_evidence) ... ok
+test_no_device_or_failed_interaction (test_v2.ReleaseTests.test_no_device_or_failed_interaction) ... ok
+test_wrong_run_binary_and_source (test_v2.ReleaseTests.test_wrong_run_binary_and_source) ... ok
+test_permission_denial_is_not_success (test_v2.UpdatePRTests.test_permission_denial_is_not_success) ... ok
+test_same_candidate_closed_pr_is_not_recreated (test_v2.UpdatePRTests.test_same_candidate_closed_pr_is_not_recreated) ... ok
+test_candidate_does_not_change_lock (test_v2.UpdateTests.test_candidate_does_not_change_lock) ... ok
+test_dependency_mismatch (test_v2.UpdateTests.test_dependency_mismatch) ... ok
+test_lookup_errors_are_reported (test_v2.UpdateTests.test_lookup_errors_are_reported) ... ok
+test_no_updates_success (test_v2.UpdateTests.test_no_updates_success) ... ok
+
+----------------------------------------------------------------------
+Ran 20 tests in 7.709s
+
+OK
+Applied change.patch
+Already applied: change.patch
+Applied add.patch
+ src/jsc/bindings/BunProcess.cpp |   26 +++++++++++--
+ src/jsc/bindings/bun-spawn.cpp  |   15 +++++++-
+ src/jsc/bindings/c-bindings.cpp |   77 +++++++++++++++++++++++++++++++++++++--
+ 3 files changed, 109 insertions(+), 9 deletions(-)
+ packages/native/build.zig                         |   45 +++++++++++++++++++--
+ packages/native/src/buffer.zig                    |   42 ++++++++++++++------
+ packages/native/src/clipboard/host.zig            |    6 +++
+ packages/native/src/tests/buffer-methods_test.zig |   30 ++++++++++++++
+ packages/native/src/android-translate-c-shim.h    |    5 ++
+ 5 files changed, 111 insertions(+), 17 deletions(-)

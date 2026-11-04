@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "opencode": {
+    "repository": "https://github.com/guysoft/opencode.git",
+    "upstream": "anomalyco/opencode",
+    "ref": "v2-android",
+    "commit": "6b03c82fc8e18f6119ae8a698e461b1219242715",
+    "source_version": "1.18.4",
+    "version": "2.0.0-android-termux.2",
+    "channel": "android-termux",
+    "patches": []
+  },
+  "bun": {
+    "repository": "https://github.com/oven-sh/bun.git",
+    "ref": "bun-v1.4.2",
+    "commit": "744846f844374847c902b5e7fd59b4342a51ef99",
+    "version": "1.4.2",
+    "patches": [{"path": "patches/bun/android-seccomp-sigsys.patch", "version": "1.4.2"}]
+  },
+  "opentui": {
+    "repository": "https://github.com/anomalyco/opentui.git",
+    "ref": "v0.5.10",
+    "commit": "f6673a04ccb671b9207da358c57152bfd27c781f",
+    "version": "0.5.10",
+    "patches": [{"path": "patches/opentui/v2-0.5.10-android.patch", "version": "0.5.10"}]
+  },
+  "toolchain": {"zig": "0.16.0", "ndk": "28.2.13676358", "android_api": 29, "arch": "aarch64"},
+  "release": {"version": "1.0.3", "revision": 1},
+  "validation": {"full_build": "NOT TESTED", "android_runtime": "NOT TESTED"}
+}

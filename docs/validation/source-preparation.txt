@@ -1,0 +1,2 @@
+Already applied: android-seccomp-sigsys.patch
+Already applied: v2-0.5.10-android.patch

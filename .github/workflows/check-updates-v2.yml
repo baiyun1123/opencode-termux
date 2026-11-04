@@ -1,0 +1,40 @@
+name: Check OpenCode 2 Android updates
+on:
+  schedule:
+    - cron: '27 3 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: v2-update-candidates
+  cancel-in-progress: false
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect candidates without changing production versions
+        id: detect
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/check-updates-v2.py
+      - name: Create or update review PR and summary
+        if: always() && steps.detect.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: python3 scripts/update-pr-v2.py
+      - name: Lookup failure report
+        if: failure()
+        run: |
+          if [ -f build-v2/updates.md ]; then cat build-v2/updates.md >> "$GITHUB_STEP_SUMMARY"; fi
+          echo 'Update check or PR creation failed; inspect step logs for the reason. No production lock was changed.' >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v2-update-report
+          path: |
+            build-v2/updates.json
+            build-v2/updates.md

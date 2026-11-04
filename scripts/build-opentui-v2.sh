@@ -3,12 +3,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/env-v2.sh"
 
-src="${OPENTUI_SRC:-${WORK_DIR}/opentui-${OPENTUI_VERSION}}"
-mkdir -p "$WORK_DIR"
-if [ ! -d "$src/.git" ]; then
-  git clone --depth 1 --branch "v${OPENTUI_VERSION}" https://github.com/anomalyco/opentui.git "$src"
-fi
-git -C "$src" apply "$REPO_ROOT/patches/opentui/v2-0.5.10-android.patch" 2>/dev/null || true
+"$SCRIPT_DIR/preflight-v2.sh"
+"$SCRIPT_DIR/prepare-source-v2.sh" opentui
+src="$OPENTUI_SRC"
 
 rm -rf "$BIONIC_SYSROOT_INC"
 mkdir -p "$BIONIC_SYSROOT_INC"
@@ -34,7 +31,7 @@ EOF
 cat > "$ZIG_LIBC" <<EOF
 include_dir=$BIONIC_SYSROOT_INC
 sys_include_dir=$BIONIC_SYSROOT_INC
-crt_dir=$NDK_SYSROOT/usr/lib/aarch64-linux-android/29
+crt_dir=$NDK_SYSROOT/usr/lib/aarch64-linux-android/$ANDROID_API
 msvc_lib_dir=
 kernel32_lib_dir=
 gcc_dir=
@@ -44,3 +41,6 @@ export ANDROID_NDK_HOME BIONIC_SYSROOT_INC ZIG_LIBC
 cd "$src/packages/native"
 "$ZIG_BIN" build -Dlibrary-target=aarch64-linux-android -Doptimize=ReleaseSafe
 cp "lib/aarch64-linux-android/libopentui.so" "$OPENTUI_LIB"
+
+python3 "$SCRIPT_DIR/v2.py" elf "$OPENTUI_LIB"
+python3 "$SCRIPT_DIR/v2.py" cache-stamp "$OPENTUI_LIB"

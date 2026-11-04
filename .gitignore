@@ -37,3 +37,7 @@ Thumbs.db
 # Temporary files
 tmp/
 build-v2/
+
+# Python build tooling
+__pycache__/
+*.pyc
