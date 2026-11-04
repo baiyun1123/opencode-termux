@@ -1,5 +1,7 @@
 name: Build OpenCode 2 Android
 on:
+  push:
+    branches: ['feat/opencode2-android-auto-build']
   pull_request:
     paths: ['scripts/**v2*', 'scripts/build-bun-android.sh', 'scripts/build-opencode2-android.sh', 'patches/**', 'config/**', 'tests/**', '.github/workflows/*v2.yml']
   workflow_dispatch:
@@ -27,7 +29,7 @@ jobs:
           persist-credentials: false
       - run: scripts/check-static-v2.sh
   build:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.repository == 'baiyun1123/opencode-termux')
     needs: static
     # Never execute fork PR code on a persistent self-hosted runner.
     runs-on: ${{ inputs.runner == 'self-hosted' && fromJSON('["self-hosted","linux","x64","opencode-v2"]') || fromJSON('["ubuntu-24.04"]') }}
