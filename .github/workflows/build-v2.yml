@@ -155,6 +155,7 @@ jobs:
             build-v2/libopentui.so.provenance.json
             build-v2/dist/bun-android/bun
             build-v2/dist/bun-android/bun.provenance.json
+            build-v2/dist/opencode2.bin
       - name: Upload verified packages
         uses: actions/upload-artifact@v4
         with:

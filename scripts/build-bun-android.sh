@@ -40,6 +40,9 @@ p.write_text(json.dumps({'profile': 'android-release', 'overrides': {
 CONFIG
 (cd "$BUN_SRC" && env "${ENVV[@]}" "$HOST_BUN" scripts/build.ts \
   --config-file="$WORK_DIR/bun-build-config.json")
+# The non-CI Android profile must still map C/C++ and Rust source paths.
+grep -Fq -- '--remap-path-prefix=' "$BUN_SRC/build/android-release/build.ninja"
+grep -Fq -- '-ffile-prefix-map=' "$BUN_SRC/build/android-release/build.ninja"
 ninja -j "${V2_JOBS:-2}" -C "$BUN_SRC/build/android-release" bun
 
 mkdir -p "$OUT_DIR"

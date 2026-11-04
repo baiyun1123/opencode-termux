@@ -1,0 +1,33 @@
+--- a/scripts/build/flags.ts
++++ b/scripts/build/flags.ts
+@@ -566,7 +566,7 @@
+       `-ffile-prefix-map=${c.vendorDir}=vendor`,
+       `-ffile-prefix-map=${c.cacheDir}=cache`,
+     ],
+-    when: c => c.unix && c.ci,
++    when: c => c.unix && (c.ci || c.abi === "android"),
+     desc: "Remap source paths in debug info (reproducible builds)",
+   },
+ ];
+--- a/scripts/build/rust.ts
++++ b/scripts/build/rust.ts
+@@ -483,7 +483,7 @@
+   // crate and vendored Rust dep (lol-html) embed the absolute checkout
+   // path into the release binary (`strings bun | grep $PWD` shows them).
+   // Gated on `cfg.ci` to match the flags.ts entry.
+-  if (cfg.ci) {
++  if (cfg.ci || cfg.abi === "android") {
+     rustflags.push(`--remap-path-prefix=${cfg.cwd}=.`);
+     rustflags.push(`--remap-path-prefix=${cfg.vendorDir}=vendor`);
+   }
+--- a/scripts/build/source.ts
++++ b/scripts/build/source.ts
+@@ -1451,7 +1451,7 @@
+   // so vendored Rust deps built here (lol-html) don't embed the absolute
+   // checkout path in `file!()`/panic locations/debuginfo either.
+   const rustflags: string[] = [...(spec.rustflags ?? [])];
+-  if (cfg.ci) {
++  if (cfg.ci || cfg.abi === "android") {
+     rustflags.push(`--remap-path-prefix=${cfg.cwd}=.`);
+     rustflags.push(`--remap-path-prefix=${cfg.vendorDir}=vendor`);
+   }

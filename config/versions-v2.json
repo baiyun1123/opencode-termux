@@ -19,6 +19,10 @@
       {
         "path": "patches/bun/android-seccomp-sigsys.patch",
         "version": "1.4.2"
+      },
+      {
+        "path": "patches/bun/v1.4.2-android-build-paths.patch",
+        "version": "1.4.2"
       }
     ]
   },
