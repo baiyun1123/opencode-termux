@@ -36,3 +36,7 @@ The first attempt passed the 20 regression tests but failed ShellCheck. Three is
 Push builds cancel an obsolete push build for the same branch; manual builds retain their existing concurrency behavior. The OpenTUI stage can also be run locally with only Zig and the NDK; its stage-specific preflight does not require the unrelated Bun/LLVM toolchain. Only its distribution library is stripped of debug sections; upstream build outputs and patches remain unchanged.
 
 The first bootstrap trial exposed an HTTP/2 download error and a pipeline exit status masked by `tee`. Downloads now use HTTPS over HTTP/1.1 with bounded retries for transfer failures and delete failed partial files. All workflow shell steps explicitly use Bash with pipefail, so setup/preflight failures stop the job rather than appearing successful.
+
+A real local ARM64 OpenTUI build produced a 5.8MB ELF linked against Android libc/libm/libdl. The first binary still contained absolute C `__FILE__` strings after debug stripping. A separate version-scoped prefix-map patch fixes this at compilation time; the original Android compatibility patch remains unchanged. ELF verification now rejects known build-root paths before expensive downstream stages.
+
+CI exposes source preparation, OpenTUI compilation, patched Bun compilation and CLI/packaging as separate steps. Verified OpenTUI and Bun outputs are cached immediately after their own successful verification, so a later stage failure does not discard earlier expensive work. Each stage has its own log file.

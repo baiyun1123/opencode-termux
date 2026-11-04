@@ -62,6 +62,12 @@ class ConfigTests(unittest.TestCase):
     def test_reject_host_elf(self):
         with self.assertRaises(AssertionError): v2.elf(Path('/bin/ls'))
 
+    def test_reject_build_paths_even_without_debug_sections(self):
+        with tempfile.TemporaryDirectory() as d:
+            p=Path(d)/'libtest.so';synthetic_elf(p,True)
+            p.write_bytes(p.read_bytes()+b'\0'+str(ROOT).encode()+b'/native/header.h\0')
+            with self.assertRaisesRegex(AssertionError,'Build path leaked'):v2.elf(p,True)
+
     def test_reject_glibc(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d)/'bun';synthetic_elf(p)

@@ -1,0 +1,107 @@
+--- a/packages/native/build.zig
++++ b/packages/native/build.zig
+@@ -189,7 +189,7 @@
+     module.link_libc = true;
+     module.addCSourceFile(.{
+         .file = b.path("src/miniaudio_shim.c"),
+-        .flags = c_flags,
++        .flags = androidReproducibleCFlags(b, c_flags),
+     });
+ }
+ 
+@@ -200,6 +200,13 @@
+     return flags;
+ }
+ 
++// C assertions embed __FILE__ even after debug sections are stripped.
++// Map the native checkout root only for the Android build environment.
++fn androidReproducibleCFlags(b: *std.Build, flags: []const []const u8) []const []const u8 {
++    if (b.graph.environ_map.get("BIONIC_SYSROOT_INC") == null) return flags;
++    return appendCFlags(b, flags, &.{b.fmt("-ffile-prefix-map={s}=.", .{b.pathFromRoot("")})});
++}
++
+ fn addImageShim(b: *std.Build, module: *std.Build.Module, target: std.Build.ResolvedTarget, macos_sdk_path: ?[]const u8) void {
+     const flags: []const []const u8 = switch (target.result.os.tag) {
+         .macos => &.{ "-std=c99", "-ffp-contract=off", "-fvisibility=hidden", "-isysroot", macos_sdk_path.? },
+@@ -208,7 +215,7 @@
+ 
+     module.addCSourceFile(.{
+         .file = b.path("src/image-shim.c"),
+-        .flags = flags,
++        .flags = androidReproducibleCFlags(b, flags),
+     });
+     module.addIncludePath(b.path("src/vendor/lcms2/include"));
+     module.addIncludePath(b.path("src/vendor/lcms2/src"));
+@@ -216,7 +223,7 @@
+         .root = b.path("src/vendor/lcms2"),
+         .files = &LCMS2_SOURCES,
+         // image.zig serializes every LittleCMS operation with icc_cache_mutex.
+-        .flags = flags,
++        .flags = androidReproducibleCFlags(b, flags),
+     });
+ 
+     // One upstream SIMD sRGB idiom forms `fp32_to_srgb8_tab4 - 912`; its
+@@ -231,7 +238,7 @@
+     };
+     module.addCSourceFile(.{
+         .file = b.path("src/image-resize-shim.c"),
+-        .flags = resize_flags,
++        .flags = androidReproducibleCFlags(b, resize_flags),
+     });
+ 
+     const webp_flags: []const []const u8 = switch (target.result.os.tag) {
+@@ -245,7 +252,7 @@
+     module.addIncludePath(b.path("src/vendor/libwebp"));
+     module.addCSourceFile(.{
+         .file = b.path("src/image-webp-config.c"),
+-        .flags = webp_dispatch_flags,
++        .flags = androidReproducibleCFlags(b, webp_dispatch_flags),
+     });
+     module.addCSourceFiles(.{
+         .root = b.path("src/vendor/libwebp"),
+@@ -280,7 +287,7 @@
+             "src/utils/thread_utils.c",
+             "src/utils/utils.c",
+         },
+-        .flags = webp_dispatch_flags,
++        .flags = androidReproducibleCFlags(b, webp_dispatch_flags),
+     });
+ 
+     switch (target.result.cpu.arch) {
+@@ -296,15 +303,15 @@
+                     "src/dsp/upsampling_sse2.c",
+                     "src/dsp/yuv_sse2.c",
+                 },
+-                .flags = webp_flags,
++                .flags = androidReproducibleCFlags(b, webp_flags),
+             });
+             module.addCSourceFile(.{
+                 .file = b.path("src/image-webp-sse41.c"),
+-                .flags = webp_flags,
++                .flags = androidReproducibleCFlags(b, webp_flags),
+             });
+             module.addCSourceFile(.{
+                 .file = b.path("src/image-webp-avx2.c"),
+-                .flags = webp_flags,
++                .flags = androidReproducibleCFlags(b, webp_flags),
+             });
+         },
+         .aarch64 => module.addCSourceFiles(.{
+@@ -318,7 +325,7 @@
+                 "src/dsp/upsampling_neon.c",
+                 "src/dsp/yuv_neon.c",
+             },
+-            .flags = webp_flags,
++            .flags = androidReproducibleCFlags(b, webp_flags),
+         }),
+         else => {},
+     }
+@@ -385,7 +392,7 @@
+     module.addCSourceFiles(.{
+         .root = yoga_dep.path(""),
+         .files = &YOGA_CXX_SOURCES,
+-        .flags = &YOGA_CXX_FLAGS,
++        .flags = androidReproducibleCFlags(b, &YOGA_CXX_FLAGS),
+     });
+ }
+ 

@@ -151,6 +151,10 @@ def elf(path, shared=False):
     assert 'DYN (Shared object file)' in header or 'DYN (Position-Independent Executable file)' in header, 'Expected PIE/shared ELF'
     if not shared:
         assert '/system/bin/linker64' in run('readelf', '-l', str(path)), 'Missing Android interpreter'
+    data = Path(path).read_bytes()
+    build_prefixes = {str(ROOT).encode(), b'/home/guy/'}
+    if os.environ.get('WORK_DIR'): build_prefixes.add(str(Path(os.environ['WORK_DIR']).resolve()).encode())
+    assert not any(prefix in data for prefix in build_prefixes), f'Build path leaked into ELF: {path}'
     return dynamic
 
 

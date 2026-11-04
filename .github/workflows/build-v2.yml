@@ -87,16 +87,57 @@ jobs:
         run: scripts/preflight-v2.sh 2>&1 | tee "$WORK_DIR/logs/preflight.log"
       - id: key
         run: echo "key=$(python3 scripts/v2.py key)" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v4
+      - name: Prepare locked source trees
+        run: scripts/prepare-source-v2.sh 2>&1 | tee "$WORK_DIR/logs/sources.log"
+      - name: Restore OpenTUI output
+        id: opentui-cache
+        uses: actions/cache/restore@v4
         with:
           path: |
-            build-v2/dist/bun-android
             build-v2/libopentui.so
             build-v2/libopentui.so.provenance.json
-          key: v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.key.outputs.key }}
-          # No restore-keys: incompatible binaries must never be reused.
-      - name: Locked source, Bun, OpenTUI, CLI, package verification
-        run: scripts/test-build-v2.sh
+          key: v2-opentui-${{ runner.os }}-${{ runner.arch }}-${{ steps.key.outputs.key }}
+      - name: Compile Android OpenTUI renderer
+        if: steps.opentui-cache.outputs.cache-hit != 'true'
+        run: scripts/build-opentui-v2.sh 2>&1 | tee "$WORK_DIR/logs/opentui-build.log"
+      - name: Verify Android OpenTUI renderer
+        run: |
+          source scripts/env-v2.sh
+          python3 scripts/v2.py cache-check "$OPENTUI_LIB"
+          python3 scripts/v2.py elf "$OPENTUI_LIB"
+      - name: Cache verified OpenTUI output before building Bun
+        if: steps.opentui-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            build-v2/libopentui.so
+            build-v2/libopentui.so.provenance.json
+          key: v2-opentui-${{ runner.os }}-${{ runner.arch }}-${{ steps.key.outputs.key }}
+      - name: Restore patched Bun output
+        id: bun-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: build-v2/dist/bun-android
+          key: v2-bun-${{ runner.os }}-${{ runner.arch }}-${{ steps.key.outputs.key }}
+      - name: Compile patched Android Bun runtime
+        if: steps.bun-cache.outputs.cache-hit != 'true'
+        run: scripts/build-bun-android.sh 2>&1 | tee "$WORK_DIR/logs/bun-build.log"
+      - name: Verify patched Android Bun runtime
+        run: |
+          source scripts/env-v2.sh
+          python3 scripts/v2.py cache-check "$DIST_DIR/bun-android/bun"
+          python3 scripts/v2.py elf "$DIST_DIR/bun-android/bun"
+      - name: Cache verified patched Bun output before building CLI
+        if: steps.bun-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: build-v2/dist/bun-android
+          key: v2-bun-${{ runner.os }}-${{ runner.arch }}-${{ steps.key.outputs.key }}
+      - name: Compile OpenCode CLI and verify packages
+        run: |
+          scripts/build-opencode2-android.sh 2>&1 | tee "$WORK_DIR/logs/opencode-build.log"
+          scripts/make-packages-v2.sh 2>&1 | tee "$WORK_DIR/logs/package-build.log"
+          scripts/verify-packages-v2.sh 2>&1 | tee "$WORK_DIR/logs/package-verification.log"
       - name: Save logs even on failure
         if: always()
         uses: actions/upload-artifact@v4

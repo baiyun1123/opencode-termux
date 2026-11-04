@@ -1,0 +1,31 @@
+{
+  "checked_at": "2026-11-05T00:46:35.020756+08:00",
+  "component": "opentui",
+  "source_commit": "f6673a04ccb671b9207da358c57152bfd27c781f",
+  "version": "0.5.10",
+  "patches": {
+    "patches/opentui/v2-0.5.10-android.patch": "aebe301cf517e9a50d0ba39a8cef49848e0f734f5fe51fc678688f3ced21cbb1",
+    "patches/opentui/v2-0.5.10-reproducible-paths.patch": "2134c3d323d317b7642d238ff48e55d9c89499bcfb3aaceed3a614518e75f2ff"
+  },
+  "zig": "0.16.0",
+  "ndk": "28.2.13676358",
+  "android_api": 29,
+  "output": "libopentui.so",
+  "bytes": 5993928,
+  "sha256": "4b8fe7385149a7a295842c4ff965360aef9eb7450fc3cd972afe98b8b2e0fa9f",
+  "elf_class": "ELF64",
+  "machine": "AArch64",
+  "dependencies": [
+    "libm.so",
+    "libc.so",
+    "libdl.so"
+  ],
+  "checks": {
+    "compile": "PASS",
+    "elf": "PASS",
+    "known_build_paths": "PASS",
+    "cache_provenance": "PASS",
+    "android_runtime": "NOT TESTED"
+  },
+  "complete_opencode_build": "NOT TESTED"
+}

@@ -31,6 +31,10 @@
       {
         "path": "patches/opentui/v2-0.5.10-android.patch",
         "version": "0.5.10"
+      },
+      {
+        "path": "patches/opentui/v2-0.5.10-reproducible-paths.patch",
+        "version": "0.5.10"
       }
     ]
   },
