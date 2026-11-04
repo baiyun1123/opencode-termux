@@ -14,7 +14,7 @@ Both existing Android patches remain byte-for-byte unchanged. The Bun patch prov
 
 ## Ubuntu prerequisites
 
-Use an isolated Ubuntu 24.04 x86_64 machine. Conservative starting capacity: 32GB RAM, 120GiB free SSD, 6-hour CI timeout; these are proposed resource gates, not measured successful build requirements. Standard hosted runners often cannot meet the gates. The workflow records memory/disk and stops before compiling when inadequate. Select a dedicated runner labeled `self-hosted,linux,x64,opencode-v2`. Never expose it to untrusted fork code.
+Use an isolated Ubuntu 24.04 x86_64 machine. Conservative starting capacity: 32GB RAM, 120GiB free SSD, 6-hour CI timeout; these are proposed resource gates, not measured successful build requirements. Dedicated runners retain these conservative gates. Hosted runners now have an explicit experimental profile with fixed toolchain bootstrap and reduced parallelism; see [HOSTED_BUILD_V2.md](HOSTED_BUILD_V2.md). The workflow records actual memory/disk and fails clearly when its selected gate is not met. Select a dedicated runner labeled `self-hosted,linux,x64,opencode-v2`. Never expose it to untrusted fork code.
 
 Install Git, Python 3, build-essential, Ninja, CMake, pkg-config, zip/unzip, xz-utils, binutils, dpkg-dev, Ruby, Perl, autoconf, automake, libtool, Rust/rustup and LLVM/Clang/lld **21** using your distro/trusted toolchain repositories. Install native Linux Bun **1.4.2**, Zig **0.16.0**, and Android NDK **28.2.13676358** (SDK manager package `ndk;28.2.13676358`). Bun's checked-in Rust toolchain controls its nightly; make the Android Rust target available using that toolchain. The Bun build may download pinned build dependencies; this is not an offline build.
 
@@ -49,7 +49,7 @@ Source SHA/patch hash records are saved under `build-v2/logs`; `build-record.jso
 
 ## GitHub Actions
 
-`Build OpenCode 2 Android` runs local static/regression checks for PRs on a hosted runner. Full builds are manual while P0 remains unverified. They require a provisioned toolchain, including on a hosted runner; the workflow does not silently download arbitrary toolchains. Select `self-hosted` once the dedicated runner is configured. `opencode_commit` optionally accepts a full source SHA for a test build; dependency/source checks remain mandatory and overridden config artifacts cannot be released against the production lock.
+`Build OpenCode 2 Android` runs local static/regression checks for PRs on a hosted runner. Full builds are available manually and on push to the dedicated development branch in the contributor fork while P0 remains unverified. Hosted runs install the checksum-locked toolchain automatically; dedicated runners use their provisioned toolchain. See [HOSTED_BUILD_V2.md](HOSTED_BUILD_V2.md) for installation and resource profiles. Select `self-hosted` once the dedicated runner is configured. `opencode_commit` optionally accepts a full source SHA for a test build; dependency/source checks remain mandatory and overridden config artifacts cannot be released against the production lock.
 
 Full-build logs are uploaded even when a step fails. Only successful verified packages are uploaded as `opencode2-android-<run_id>`. The token has read-only repository permissions. No PR receives publishing credentials and fork PRs never execute on the self-hosted runner. Linux builds always report Android runtime as NOT TESTED.
 

@@ -39,7 +39,7 @@ EOF
 
 export ANDROID_NDK_HOME BIONIC_SYSROOT_INC ZIG_LIBC
 cd "$src/packages/native"
-"$ZIG_BIN" build -Dlibrary-target=aarch64-linux-android -Doptimize=ReleaseSafe
+"$ZIG_BIN" build -j"${V2_JOBS:-2}" -Dlibrary-target=aarch64-linux-android -Doptimize=ReleaseSafe
 cp "lib/aarch64-linux-android/libopentui.so" "$OPENTUI_LIB"
 
 python3 "$SCRIPT_DIR/v2.py" elf "$OPENTUI_LIB"

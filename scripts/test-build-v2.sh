@@ -10,12 +10,15 @@ trap 'finish "$?"' EXIT
 "$REPO_ROOT/scripts/preflight-v2.sh"
 "$REPO_ROOT/scripts/prepare-source-v2.sh"
 # Only complete, key-specific artifacts are cached. Each stage still checks its output.
-if [[ ! -f "$DIST_DIR/bun-android/bun" ]]; then "$REPO_ROOT/scripts/build-bun-android.sh"; fi
-python3 "$REPO_ROOT/scripts/v2.py" cache-check "$DIST_DIR/bun-android/bun"
-python3 "$REPO_ROOT/scripts/v2.py" elf "$DIST_DIR/bun-android/bun"
+echo '=== OpenTUI native renderer ==='
 if [[ ! -f "$OPENTUI_LIB" ]]; then "$REPO_ROOT/scripts/build-opentui-v2.sh"; fi
 python3 "$REPO_ROOT/scripts/v2.py" cache-check "$OPENTUI_LIB"
 python3 "$REPO_ROOT/scripts/v2.py" elf "$OPENTUI_LIB"
+echo '=== Patched Android Bun runtime ==='
+if [[ ! -f "$DIST_DIR/bun-android/bun" ]]; then "$REPO_ROOT/scripts/build-bun-android.sh"; fi
+python3 "$REPO_ROOT/scripts/v2.py" cache-check "$DIST_DIR/bun-android/bun"
+python3 "$REPO_ROOT/scripts/v2.py" elf "$DIST_DIR/bun-android/bun"
+echo '=== OpenCode application and packages ==='
 "$REPO_ROOT/scripts/build-opencode2-android.sh"
 "$REPO_ROOT/scripts/make-packages-v2.sh"
 "$REPO_ROOT/scripts/verify-packages-v2.sh"

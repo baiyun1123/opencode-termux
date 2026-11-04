@@ -1,20 +1,42 @@
 #!/usr/bin/env bash
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/env-v2.sh"
+errors=0
+fail() { echo "ERROR: $*" >&2; errors=$((errors + 1)); }
 for cmd in git python3 readelf cmake ninja rustup zip xz dpkg-deb; do
-  command -v "$cmd" >/dev/null || { echo "Missing tool: $cmd" >&2; exit 1; }
+  command -v "$cmd" >/dev/null || fail "Missing tool: $cmd"
 done
-[[ "$("$HOST_BUN" --version)" == "$BUN_VERSION" ]] || { echo 'Host Bun version mismatch' >&2; exit 1; }
-[[ "$("$ZIG_BIN" version)" == "$ZIG_VERSION" ]] || { echo 'Zig version mismatch' >&2; exit 1; }
-grep -Eq "Pkg.Revision[[:space:]]*=[[:space:]]*$NDK_VERSION" "$ANDROID_NDK_HOME/source.properties"
-test -d "$NDK_SYSROOT/usr/lib/aarch64-linux-android/$ANDROID_API"
+if command -v "$HOST_BUN" >/dev/null; then
+  [[ "$("$HOST_BUN" --version)" == "$BUN_VERSION" ]] || fail "Host Bun must be $BUN_VERSION"
+else fail 'Host Bun missing; run python3 scripts/bootstrap-v2.py'; fi
+if command -v "$ZIG_BIN" >/dev/null; then
+  [[ "$("$ZIG_BIN" version)" == "$ZIG_VERSION" ]] || fail "Zig must be $ZIG_VERSION"
+else fail 'Zig missing; run python3 scripts/bootstrap-v2.py'; fi
+if [[ -f "$ANDROID_NDK_HOME/source.properties" ]]; then
+  grep -Eq "Pkg.Revision[[:space:]]*=[[:space:]]*$NDK_VERSION" "$ANDROID_NDK_HOME/source.properties" || fail "NDK must be $NDK_VERSION"
+else fail "NDK missing: $ANDROID_NDK_HOME"; fi
+[[ -d "$NDK_SYSROOT/usr/lib/aarch64-linux-android/$ANDROID_API" ]] || fail 'NDK target API sysroot missing'
 TC="${BUN_TOOLCHAIN_LLVM:-/usr/lib/llvm-21}"
-"$TC/bin/clang" --version | grep -Eq 'version 21\.'
-"$TC/bin/ld.lld" --version | grep -Eq 'LLD 21\.'
-# Resource gate is advisory locally; CI explicitly enables it for full builds.
+if [[ -x "$TC/bin/clang" && -x "$TC/bin/ld.lld" ]]; then
+  "$TC/bin/clang" --version | grep -Eq 'version 21\.' || fail 'LLVM clang 21 required'
+  "$TC/bin/ld.lld" --version | grep -Eq 'LLD 21\.' || fail 'LLVM lld 21 required'
+else fail "LLVM 21 missing: $TC"; fi
+[[ "${V2_JOBS:-2}" =~ ^[1-9][0-9]*$ ]] || fail 'V2_JOBS must be a positive integer'
 if [[ "${V2_RESOURCE_GATE:-0}" == 1 ]]; then
   mkdir -p "$WORK_DIR"
-  awk '/MemTotal/ {if ($2 < 30000000) exit 1}' /proc/meminfo || { echo 'Full build requires >=32GB RAM; use a dedicated runner' >&2; exit 1; }
-  available=$(df -Pk "$WORK_DIR" | awk 'END {print $4}')
-  (( available >= 125829120 )) || { echo 'Full build requires >=120GiB free disk' >&2; exit 1; }
+  profile="${V2_RESOURCE_PROFILE:-dedicated}"
+  case "$profile" in
+    dedicated) min_mem=30000000; min_disk=125829120 ;;
+    hosted-experimental)
+      min_mem=12000000; min_disk=41943040
+      echo 'Experimental hosted build: 2 jobs recommended; full build may still exhaust resources.' ;;
+    *) fail "Unknown resource profile: $profile"; min_mem=30000000; min_disk=125829120 ;;
+  esac
+  memory=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
+  disk=$(df -Pk "$WORK_DIR" | awk 'END {print $4}')
+  echo "Resource profile: $profile; RAM=${memory}KiB; free disk=${disk}KiB"
+  (( memory >= min_mem )) || fail "Insufficient RAM for $profile (need ${min_mem}KiB)"
+  (( disk >= min_disk )) || fail "Insufficient free disk for $profile (need ${min_disk}KiB)"
 fi
+(( errors == 0 )) || { echo "$errors preflight check(s) failed" >&2; exit 1; }
+echo 'Toolchain and resource preflight PASS; Android runtime: NOT TESTED'

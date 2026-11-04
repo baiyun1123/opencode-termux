@@ -44,6 +44,7 @@ def key(c):
     h = hashlib.sha256(json.dumps(c, sort_keys=True).encode())
     paths = {ROOT / p['path'] for n in ('opencode', 'bun', 'opentui') for p in c[n]['patches']}
     paths.update((ROOT / 'scripts').glob('*v2*'))
+    paths.add(ROOT / 'config/toolchains-v2.json')
     paths.update([Path(__file__), ROOT / 'scripts/build-bun-android.sh', ROOT / 'scripts/build-opencode2-android.sh'])
     for p in sorted(paths):
         if p.is_file():

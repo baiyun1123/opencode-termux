@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "host": "linux-x86_64",
+  "archives": {
+    "bun": {
+      "version": "1.4.2",
+      "url": "https://github.com/oven-sh/bun/releases/download/bun-v1.4.2/bun-linux-x64.zip",
+      "sha256": "36368faef7527875d5ffa52e53cd48021741f2a83eb6208a8dd64068d422a913",
+      "directory": "bun-linux-x64",
+      "format": "zip"
+    },
+    "zig": {
+      "version": "0.16.0",
+      "url": "https://ziglang.org/download/0.16.0/zig-x86_64-linux-0.16.0.tar.xz",
+      "sha256": "70e49664a74374b48b51e6f3fdfbf437f6395d42509050588bd49abe52ba3d00",
+      "directory": "zig-x86_64-linux-0.16.0",
+      "format": "tar.xz"
+    },
+    "ndk": {
+      "version": "28.2.13676358",
+      "url": "https://dl.google.com/android/repository/android-ndk-r28c-linux.zip",
+      "sha1": "a7b54a5de87fecd125a17d54f73c446199e72a64",
+      "directory": "android-ndk-r28c",
+      "format": "zip",
+      "checksum_source": "https://github.com/android/ndk/wiki/Unsupported-Downloads#r28c"
+    },
+    "llvm": {
+      "version": "21.1.8",
+      "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.8/LLVM-21.1.8-Linux-X64.tar.xz",
+      "sha256": "b3b7f2801d15d50736acea3c73982994d025b01c2f035b91ae3b49d1b575732b",
+      "directory": "LLVM-21.1.8-Linux-X64",
+      "format": "tar.xz"
+    }
+  }
+}
