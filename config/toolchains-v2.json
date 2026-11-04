@@ -22,7 +22,9 @@
       "sha1": "a7b54a5de87fecd125a17d54f73c446199e72a64",
       "directory": "android-ndk-r28c",
       "format": "zip",
-      "checksum_source": "https://github.com/android/ndk/wiki/Unsupported-Downloads#r28c"
+      "checksum_source": "https://github.com/android/ndk/wiki/Unsupported-Downloads#r28c",
+      "sha256": "dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f",
+      "sha256_source": "Computed from official archive after verifying Google-published SHA1"
     },
     "llvm": {
       "version": "21.1.8",

@@ -17,7 +17,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/env-v2.sh"
 
 OUT_DIR="${DIST_DIR}/bun-android"
-"$SCRIPT_DIR/preflight-v2.sh"
+"$SCRIPT_DIR/preflight-v2.sh" bun
 "$SCRIPT_DIR/prepare-source-v2.sh" bun
 
 # Use a provisioned LLVM 21 toolchain; never overwrite system symlinks.

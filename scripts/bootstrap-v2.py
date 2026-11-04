@@ -51,8 +51,14 @@ def download(entry, path):
     partial = path.with_suffix(path.suffix+'.partial')
     partial.unlink(missing_ok=True)
     print('Downloading '+entry['url'], flush=True)
-    subprocess.check_call(['curl','--silent','--show-error','--fail','--location','--retry','3','--connect-timeout','30','--max-time','1800',
-                           '--proto','=https','--proto-redir','=https','--output',str(partial),entry['url']])
+    try:
+        subprocess.check_call(['curl','--silent','--show-error','--http1.1','--fail','--location',
+                               '--retry','3','--retry-all-errors','--retry-max-time','600',
+                               '--connect-timeout','30','--max-time','1800','--proto','=https',
+                               '--proto-redir','=https','--output',str(partial),entry['url']])
+    except subprocess.CalledProcessError:
+        partial.unlink(missing_ok=True)
+        raise
     if digest(partial, algorithm) != entry[algorithm]:
         partial.unlink(missing_ok=True)
         raise RuntimeError('Archive checksum mismatch: '+entry['url'])

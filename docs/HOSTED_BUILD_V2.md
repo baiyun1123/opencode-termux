@@ -1,6 +1,6 @@
 # Hosted runner bootstrap (experimental)
 
-The v2 workflow now installs Ubuntu build prerequisites and downloads the exact host Bun 1.4.2, Zig 0.16.0, Android NDK 28.2.13676358 (r28c), and LLVM 21.1.8 before preflight. `config/toolchains-v2.json` is the host download lock; its versions must agree with `versions-v2.json`. Archives come from the projects' official distribution hosts. Bun, Zig and LLVM use fixed SHA256 hashes. NDK initially uses Google's published SHA1 from the official NDK wiki, and records the downloaded SHA256 in `build-v2/logs/toolchains.json` for a subsequent reviewed SHA256 pin. Downloaded archives are checked again after a cache restore; an invalid hash is never extracted or executed.
+The v2 workflow now installs Ubuntu build prerequisites and downloads the exact host Bun 1.4.2, Zig 0.16.0, Android NDK 28.2.13676358 (r28c), and LLVM 21.1.8 before preflight. `config/toolchains-v2.json` is the host download lock; its versions must agree with `versions-v2.json`. Archives come from the projects' official distribution hosts. All four archives use fixed SHA256 hashes. NDK's SHA256 was computed from the official archive after independently checking Google's published SHA1 from the official NDK wiki; both values and their provenance are retained in the lock. Downloaded archives are checked again after a cache restore; an invalid hash is never extracted or executed.
 
 On GitHub-hosted Ubuntu, Rust/rustup is supplied by the runner image. Bun's checked-in Rust toolchain selects the compiler. On another clean Ubuntu host, install rustup from its official source before running the OS setup script. This setup does not install toolchains on persistent self-hosted runners; provision those deliberately using the same scripts.
 
@@ -32,3 +32,7 @@ OpenTUI builds before the large patched Bun runtime. Successful native outputs a
 ## First real CI observations
 
 The first attempt passed the 20 regression tests but failed ShellCheck. Three issues were fixed (masked command statuses and a trap variable). The second attempt passed static checks including ShellCheck and reached build preflight, where `bun` was missing. Its runner reported about 15GiB RAM and 86GiB free disk. The automatic bootstrap and hosted profile address those observed prerequisites; a successful complete build is still required to validate the integration. Android runtime remains NOT TESTED.
+
+Push builds cancel an obsolete push build for the same branch; manual builds retain their existing concurrency behavior. The OpenTUI stage can also be run locally with only Zig and the NDK; its stage-specific preflight does not require the unrelated Bun/LLVM toolchain. Only its distribution library is stripped of debug sections; upstream build outputs and patches remain unchanged.
+
+The first bootstrap trial exposed an HTTP/2 download error and a pipeline exit status masked by `tee`. Downloads now use HTTPS over HTTP/1.1 with bounded retries for transfer failures and delete failed partial files. All workflow shell steps explicitly use Bash with pipefail, so setup/preflight failures stop the job rather than appearing successful.

@@ -1,26 +1,36 @@
 #!/usr/bin/env bash
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/env-v2.sh"
+stage="${1:-all}"
+case "$stage" in all|bun|opentui) ;; *) echo "Unknown build stage: $stage" >&2; exit 1 ;; esac
 errors=0
 fail() { echo "ERROR: $*" >&2; errors=$((errors + 1)); }
-for cmd in git python3 readelf cmake ninja rustup zip xz dpkg-deb; do
+commands=(git python3 readelf)
+if [[ "$stage" != opentui ]]; then commands+=(cmake ninja rustup zip xz dpkg-deb); fi
+for cmd in "${commands[@]}"; do
   command -v "$cmd" >/dev/null || fail "Missing tool: $cmd"
 done
+if [[ "$stage" != opentui ]]; then
 if command -v "$HOST_BUN" >/dev/null; then
   [[ "$("$HOST_BUN" --version)" == "$BUN_VERSION" ]] || fail "Host Bun must be $BUN_VERSION"
 else fail 'Host Bun missing; run python3 scripts/bootstrap-v2.py'; fi
+fi
+if [[ "$stage" != bun ]]; then
 if command -v "$ZIG_BIN" >/dev/null; then
   [[ "$("$ZIG_BIN" version)" == "$ZIG_VERSION" ]] || fail "Zig must be $ZIG_VERSION"
 else fail 'Zig missing; run python3 scripts/bootstrap-v2.py'; fi
+fi
 if [[ -f "$ANDROID_NDK_HOME/source.properties" ]]; then
   grep -Eq "Pkg.Revision[[:space:]]*=[[:space:]]*$NDK_VERSION" "$ANDROID_NDK_HOME/source.properties" || fail "NDK must be $NDK_VERSION"
 else fail "NDK missing: $ANDROID_NDK_HOME"; fi
 [[ -d "$NDK_SYSROOT/usr/lib/aarch64-linux-android/$ANDROID_API" ]] || fail 'NDK target API sysroot missing'
+if [[ "$stage" != opentui ]]; then
 TC="${BUN_TOOLCHAIN_LLVM:-/usr/lib/llvm-21}"
 if [[ -x "$TC/bin/clang" && -x "$TC/bin/ld.lld" ]]; then
-  "$TC/bin/clang" --version | grep -Eq 'version 21\.' || fail 'LLVM clang 21 required'
-  "$TC/bin/ld.lld" --version | grep -Eq 'LLD 21\.' || fail 'LLVM lld 21 required'
+  "$TC/bin/clang" --version | grep -Fq "version $LLVM_VERSION" || fail "LLVM clang $LLVM_VERSION required"
+  "$TC/bin/ld.lld" --version | grep -Fq "LLD $LLVM_VERSION" || fail "LLVM lld $LLVM_VERSION required"
 else fail "LLVM 21 missing: $TC"; fi
+fi
 [[ "${V2_JOBS:-2}" =~ ^[1-9][0-9]*$ ]] || fail 'V2_JOBS must be a positive integer'
 if [[ "${V2_RESOURCE_GATE:-0}" == 1 ]]; then
   mkdir -p "$WORK_DIR"

@@ -30,6 +30,19 @@ class BootstrapTests(unittest.TestCase):
             self.assertFalse(target.exists())
             self.assertFalse(Path(str(target)+'.partial').exists())
 
+    def test_transfer_failure_deletes_partial(self):
+        import subprocess
+        with tempfile.TemporaryDirectory() as d:
+            target=Path(d)/'tool.zip'
+            entry={'url':'https://example.invalid/tool.zip','sha256':'0'*64}
+            def fail(args):
+                Path(args[args.index('--output')+1]).write_bytes(b'partial')
+                raise subprocess.CalledProcessError(92,args)
+            with patch.object(bootstrap.subprocess,'check_call',side_effect=fail):
+                with self.assertRaises(subprocess.CalledProcessError):bootstrap.download(entry,target)
+            self.assertFalse(target.exists())
+            self.assertFalse(Path(str(target)+'.partial').exists())
+
     def test_verified_cache_does_not_download(self):
         with tempfile.TemporaryDirectory() as d:
             target=Path(d)/'tool.zip';target.write_bytes(b'valid')
@@ -49,6 +62,18 @@ class BootstrapTests(unittest.TestCase):
         c=bootstrap.v2.config();c=copy.deepcopy(c);c['bun']['version']='1.4.4'
         with patch.object(bootstrap.v2,'config',return_value=c):
             with self.assertRaisesRegex(AssertionError,'mismatch'):bootstrap.lock()
+
+    def test_native_stage_does_not_require_bun_or_llvm(self):
+        import subprocess
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);ndk=root/'ndk'
+            (ndk/'toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/29').mkdir(parents=True)
+            (ndk/'source.properties').write_text('Pkg.Revision = 28.2.13676358\n')
+            zig=root/'zig';zig.write_text('#!/bin/sh\necho 0.16.0\n');zig.chmod(0o755)
+            env=dict(os.environ,WORK_DIR=str(root),HOST_BUN='/missing-bun',ZIG_BIN=str(zig),
+                     ANDROID_NDK_HOME=str(ndk),BUN_TOOLCHAIN_LLVM='/missing-llvm',V2_RESOURCE_GATE='0')
+            r=subprocess.run(['bash',str(ROOT/'scripts/preflight-v2.sh'),'opentui'],env=env,capture_output=True,text=True)
+            self.assertEqual(r.returncode,0,r.stdout+r.stderr)
 
     def test_preflight_collects_multiple_missing_tools(self):
         import subprocess

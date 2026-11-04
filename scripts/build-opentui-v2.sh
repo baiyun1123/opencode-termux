@@ -3,7 +3,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/env-v2.sh"
 
-"$SCRIPT_DIR/preflight-v2.sh"
+"$SCRIPT_DIR/preflight-v2.sh" opentui
 "$SCRIPT_DIR/prepare-source-v2.sh" opentui
 src="$OPENTUI_SRC"
 
@@ -41,6 +41,8 @@ export ANDROID_NDK_HOME BIONIC_SYSROOT_INC ZIG_LIBC
 cd "$src/packages/native"
 "$ZIG_BIN" build -j"${V2_JOBS:-2}" -Dlibrary-target=aarch64-linux-android -Doptimize=ReleaseSafe
 cp "lib/aarch64-linux-android/libopentui.so" "$OPENTUI_LIB"
+# Keep the original native build unmodified; strip only the distribution copy.
+"$NDK_TOOLCHAIN/bin/llvm-strip" --strip-debug "$OPENTUI_LIB"
 
 python3 "$SCRIPT_DIR/v2.py" elf "$OPENTUI_LIB"
 python3 "$SCRIPT_DIR/v2.py" cache-stamp "$OPENTUI_LIB"

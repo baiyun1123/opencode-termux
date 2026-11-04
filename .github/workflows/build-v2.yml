@@ -15,11 +15,14 @@ on:
         type: string
         default: ''
         description: Optional full OpenCode SHA for a test build (release prohibited)
+defaults:
+  run:
+    shell: bash
 permissions:
   contents: read
 concurrency:
   group: v2-build-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 jobs:
   static:
     runs-on: ubuntu-24.04

@@ -57,7 +57,7 @@ def environment(c):
               'RELEASE_VERSION': c['release']['version'], 'PACKAGE_REVISION': str(c['release']['revision']),
               'PACMAN_VERSION': c['release']['version'].replace('-', '_').replace('~', '_'),
               'BUN_VERSION': c['bun']['version'], 'OPENTUI_VERSION': c['opentui']['version'],
-              'ZIG_VERSION': c['toolchain']['zig'], 'NDK_VERSION': c['toolchain']['ndk'],
+              'ZIG_VERSION': c['toolchain']['zig'], 'LLVM_VERSION': c['toolchain']['llvm'], 'NDK_VERSION': c['toolchain']['ndk'],
               'ANDROID_API': str(c['toolchain']['android_api']), 'V2_CACHE_KEY': key(c)}
     for name, value in values.items():
         print(f'export {name}={shlex.quote(value)}')
