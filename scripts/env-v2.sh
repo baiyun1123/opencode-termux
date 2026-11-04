@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-export REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+export REPO_ROOT
 export V2_CONFIG="${V2_CONFIG:-$REPO_ROOT/config/versions-v2.json}"
 # Read validated JSON; fixed keys and shell-quoted values only.
 _v2_env="$(python3 "$REPO_ROOT/scripts/v2.py" env)"

@@ -7,7 +7,9 @@ source "$SCRIPT_DIR/env-v2.sh"
 "$SCRIPT_DIR/prepare-source-v2.sh" opencode
 mkdir -p "$DIST_DIR"
 cd "$OPENCODE_WORKTREE"
-export PATH="$(dirname "$(command -v "$HOST_BUN")"):$PATH"
+host_bun_path="$(command -v "$HOST_BUN")"
+PATH="$(dirname "$host_bun_path"):$PATH"
+export PATH
 export BUN_COMPILE_RELEASE="bun-v${BUN_VERSION}"
 export OPENCODE_BUN_RUNTIME="$DIST_DIR/bun-android/bun"
 test -x "$OPENCODE_BUN_RUNTIME"
