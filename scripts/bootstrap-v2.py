@@ -103,6 +103,11 @@ def provision(selected):
     installed = {}
     for name in selected:
         installed[name] = install(name,data['archives'][name],downloads,tools)
+    # Official ZIPs contain bun only; package scripts also expect the bunx alias.
+    if 'bun' in installed:
+        alias = installed['bun']/'bunx'
+        if not alias.exists(): alias.symlink_to('bun')
+        assert alias.resolve() == (installed['bun']/'bun').resolve(), 'Unexpected bunx executable'
     env = {}
     if 'bun' in installed: env['HOST_BUN'] = str(installed['bun']/'bun')
     if 'zig' in installed: env['ZIG_BIN'] = str(installed['zig']/'zig')
